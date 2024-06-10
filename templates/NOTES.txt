@@ -1,0 +1,9 @@
+{{- if .Values.ingress.enabled -}}
+1. Get the application URL by running these commands:
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "datamasque.fullname" . }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  echo "Visit http://$SERVICE_IP to use your application"
+{{- else -}}
+1. To access your application, use the following command:
+  kubectl --namespace {{ .Release.Namespace }} port-forward service/{{ .Values.service.adminFrontend.name }} 65443:{{ .Values.service.adminFrontend.port }}
+  echo "Visit http://localhost:65443 to use your application"
+{{- end -}}
