@@ -1,0 +1,36 @@
+# values.yaml
+createNamespace: true
+namespace: datamasque
+image:
+  repository: 123456789012.dkr.ecr.ap-southeast-2.amazonaws.com/datamasque
+  tag: 2-19-1-final-14479
+  pullPolicy: IfNotPresent
+serviceAccount:
+  create: true
+  name: datamasque-sa
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/rds-s3-custom-role
+persistence:
+  ebs:
+    enabled: true
+    storageClassName: ebs-sc
+    size: 20Gi
+  efs:
+    enabled: false
+    storageClassName: efs-sc
+    pvname: efs-pv
+    size: 40Gi
+multiAZ: true
+availabilityZone: "ap-southeast-2c"
+db:
+  user: postgres
+  password: "" # Leave empty to auto-generate
+ebsCsiDriverRoleArn: arn:aws:iam::123456789012:role/AmazonEKS_EBS_CSI_DriverRole
+efsFileSystemId: fs-12345678
+efsAccessPointId: fsap-12345678
+service:
+  adminFrontend:
+    port: 8443
+    name: admin-frontend
+ingress:
+  enabled: false # Default to false if you don't use ingress

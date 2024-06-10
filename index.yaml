@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  datamasque:
+  - apiVersion: v2
+    appVersion: 2.19.1
+    created: "2024-06-10T16:40:59.997055-03:00"
+    description: A Helm chart for Kubernetes
+    digest: 6fc0e421bf09bf08515a76c1486335581df917acd9961b81c14d94f436fae69a
+    name: datamasque
+    type: application
+    urls:
+    - https://raw.githubusercontent.com/datamasque/DataMasque-charts/main/datamasque-0.1.0.tgz
+    version: 0.1.0
+generated: "2024-06-10T16:40:59.995969-03:00"

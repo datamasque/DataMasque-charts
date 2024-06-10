@@ -1,0 +1,49 @@
+# Config for redis (agent-queue) --------------------------------------------------------------------------------------
+# Service layer for redis (agent-queue container)
+# ClusterIP service to allow internal connectivity within cluster
+apiVersion: v1
+kind: Service
+metadata:
+  name: agent-queue
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: agent-queue
+spec:
+  type: ClusterIP
+  selector:
+    app: agent-queue
+  ports:
+    - port: 6379
+      name: redis
+
+---
+# Agent queue
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  creationTimestamp: null
+  name: agent-queue
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: agent-queue
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agent-queue
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: agent-queue
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      containers:
+        - name: agent-queue
+          ports:
+            - containerPort: 6379
+          image: "{{ .Values.image.repository }}/agent-queue:{{ .Values.image.tag }}"
+          resources:
+            requests:
+              cpu: 1000m
+              memory: 256Mi

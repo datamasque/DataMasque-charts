@@ -1,0 +1,317 @@
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  name: admin-frontend
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: masque-frontend
+    {{- include "datamasque.productLabel" . | nindent 4 }}
+spec:
+  type: NodePort
+  selector:
+    app: masque-frontend
+  ports:
+    - port: 8443
+      targetPort: 8443
+      name: https
+      protocol: TCP
+---
+#apiVersion: v1
+#kind: ServiceAccount
+#metadata:
+#  labels:
+#    app.kubernetes.io/name: aws-efs-csi-driver
+#  name: efs-csi-controller-sa
+#  namespace: kube-system
+#  annotations:
+#    eks.amazonaws.com/role-arn: {{ .Values.ebsCsiDriverRoleArn }}
+---
+#apiVersion: v1
+#kind: ServiceAccount
+#metadata:
+#  labels:
+#    app.kubernetes.io/name: aws-efs-csi-driver
+#  name: efs-csi-node-sa
+#  namespace: kube-system
+#  annotations:
+#    eks.amazonaws.com/role-arn: {{ .Values.ebsCsiDriverRoleArn }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: admin-server
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: masque
+    {{- include "datamasque.productLabel" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app: masque
+  ports:
+    - port: 8000
+      name: uwsgi
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "datamasque.fullname" . }}-db-secret
+  namespace: {{ .Values.namespace }}
+data:
+  postgres-password: {{ default (randAlphaNum 16 | b64enc) .Values.db.password | b64enc }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  creationTimestamp: null
+  name: masque
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: masque
+    {{- include "datamasque.productLabel" . | nindent 4 }}
+spec:
+  serviceName: admin-server
+  selector:
+    matchLabels:
+      app: masque
+  replicas: 1
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: masque
+        {{- include "datamasque.productLabel" . | nindent 4 }}
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      containers:
+        - command: ["/entrypoint.sh"]
+          name: admin-server
+          image: "{{ .Values.image.repository }}/admin-server:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: 8000
+          env:
+            - name: MASQUE_ADMIN_ENV
+              value: "prod"
+            - name: MASQUE_ADMIN_DB_NAME
+              value: "postgres"
+            - name: MASQUE_ADMIN_DB_USER
+              value: "postgres"
+            - name: MASQUE_ADMIN_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "datamasque.fullname" . }}-db-secret
+                  key: postgres-password
+            - name: MASQUE_ADMIN_DB_HOST
+              value: "admin-db"
+            - name: MASQUE_ADMIN_DB_PORT
+              value: "5432"
+            - name: MASQUE_SANDBOX_PATH
+              value: "/files/user/"
+          volumeMounts:
+            - mountPath: /files
+              name: files
+            - mountPath: /license
+              name: files
+            - mountPath: /.keys
+              name: files
+          resources:
+            requests:
+              cpu: 1000m
+              memory: 2Gi
+      restartPolicy: Always
+      volumes:
+        - name: files
+          persistentVolumeClaim:
+            claimName: efs-claim
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  creationTimestamp: null
+  name: masque-agent
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: masque-agent
+    {{- include "datamasque.productLabel" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: masque-agent
+  replicas: 1
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: masque-agent
+        {{- include "datamasque.productLabel" . | nindent 4 }}
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      containers:
+        - command: ["/entrypoint.sh"]
+          name: agent
+          image: "{{ .Values.image.repository }}/agent:{{ .Values.image.tag }}"
+          env:
+            - name: LOGLEVEL
+              value: "INFO"
+            - name: MASQUE_SANDBOX_PATH
+              value: "/files/user/"
+            - name: MASQUE_ENV
+              value: "prod"
+            - name: MASQUE_VERSION
+              value: "2.19.1"
+          volumeMounts:
+            - mountPath: /files
+              name: files
+            - mountPath: /license
+              name: files
+            - mountPath: /.keys
+              name: files
+          resources:
+            requests:
+              cpu: 1200m
+              memory: 5Gi
+      restartPolicy: Always
+      volumes:
+        - name: files
+          persistentVolumeClaim:
+            claimName: efs-claim
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  creationTimestamp: null
+  name: masque-frontend
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: masque-frontend
+    {{- include "datamasque.productLabel" . | nindent 4 }}
+spec:
+  serviceName: admin-frontend
+  selector:
+    matchLabels:
+      app: masque-frontend
+  replicas: 1
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: masque-frontend
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      containers:
+        - command: ["/entrypoint.sh"]
+          name: admin-frontend
+          image: "{{ .Values.image.repository }}/admin-frontend:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: 8443
+              hostPort: 443
+              protocol: TCP
+            - containerPort: 8080
+              hostPort: 80
+              protocol: TCP
+          env:
+            - name: HOST_IP
+              value: 127.0.0.1
+          volumeMounts:
+            - mountPath: /certs
+              name: files
+            - mountPath: /files
+              name: files
+          resources:
+            requests:
+              cpu: 1000m
+              memory: 256Mi
+      restartPolicy: Always
+      volumes:
+        - name: files
+          persistentVolumeClaim:
+            claimName: efs-claim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: admin-db
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: admin-db
+    {{- include "datamasque.productLabel" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app: admin-db
+  ports:
+    - port: 5432
+      name: postgres
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: admin-db
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: admin-db
+    {{- include "datamasque.productLabel" . | nindent 4 }}
+spec:
+  serviceName: admin-db
+  replicas: 1
+  selector:
+    matchLabels:
+      app: admin-db
+  template:
+    metadata:
+      labels:
+        app: admin-db
+        {{- include "datamasque.productLabel" . | nindent 4 }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      {{- if and .Values.multiAZ .Values.availabilityZone }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: topology.kubernetes.io/zone
+                    operator: In
+                    values:
+                      - {{ .Values.availabilityZone }}
+      {{- end }}
+      containers:
+        - name: admin-db
+          ports:
+            - containerPort: 5432
+          image: "{{ .Values.image.repository }}/admin-db:{{ .Values.image.tag }}"
+          resources:
+            requests:
+              cpu: 1000m
+              memory: 1000Mi
+          volumeMounts:
+            - name: pg-data
+              subPath: data
+              mountPath: /var/lib/postgresql/data/
+          env:
+            - name: POSTGRES_USER
+              value: {{ .Values.db.user }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "datamasque.fullname" . }}-db-secret
+                  key: postgres-password
+      volumes:
+        - name: pg-data
+          persistentVolumeClaim:
+            claimName: ebs-claim
