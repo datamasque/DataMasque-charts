@@ -1,6 +1,7 @@
-# values.yaml
+# DM Deployment values.yaml
 createNamespace: true
 namespace: datamasque
+masqueagents: 4 
 image:
   repository: 123456789012.dkr.ecr.ap-southeast-2.amazonaws.com/datamasque
   tag: 2-19-1-final-14479
@@ -8,14 +9,19 @@ image:
 serviceAccount:
   create: true
   name: datamasque-sa
-  annotations:
+  annotations: # Role to allow AWS services like RDS and S3
     eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/rds-s3-custom-role
 persistence:
   ebs:
+    create_storageClass: true # provisioner: ebs.csi.aws.com required
     enabled: true
     storageClassName: ebs-sc
     size: 20Gi
+    reclaimPolicy: Retain # use Retain to avoid internal database deletion when uninstalling DM
   efs:
+    create_storageClass: false # provisioner: efs.csi.aws.com required
+    create_EfsControllerSa: false
+    create_EfsNodeSa: false
     enabled: false
     storageClassName: efs-sc
     pvname: efs-pv
@@ -25,7 +31,8 @@ availabilityZone: "ap-southeast-2c"
 db:
   user: postgres
   password: "" # Leave empty to auto-generate
-ebsCsiDriverRoleArn: arn:aws:iam::123456789012:role/AmazonEKS_EBS_CSI_DriverRole
+efsCsiDriverControllerRoleArn: arn:aws:iam::123456789012:role/AmazonEKS_EFS_CSI_DriverRole
+efsCsiDriverNodeRoleArn: arn:aws:iam::123456789012:role/AmazonEKS_EFS_CSI_DriverRole
 efsFileSystemId: fs-12345678
 efsAccessPointId: fsap-12345678
 service:

@@ -17,25 +17,29 @@ spec:
       name: https
       protocol: TCP
 ---
-#apiVersion: v1
-#kind: ServiceAccount
-#metadata:
-#  labels:
-#    app.kubernetes.io/name: aws-efs-csi-driver
-#  name: efs-csi-controller-sa
-#  namespace: kube-system
-#  annotations:
-#    eks.amazonaws.com/role-arn: {{ .Values.ebsCsiDriverRoleArn }}
+{{- if .Values.persistence.efs.create_EfsControllerSa }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/name: aws-efs-csi-driver
+  name: efs-csi-controller-sa
+  namespace: kube-system
+  annotations:
+    eks.amazonaws.com/role-arn: {{ .Values.efsCsiDriverControllerRoleArn }}
+{{- end }}
 ---
-#apiVersion: v1
-#kind: ServiceAccount
-#metadata:
-#  labels:
-#    app.kubernetes.io/name: aws-efs-csi-driver
-#  name: efs-csi-node-sa
-#  namespace: kube-system
-#  annotations:
-#    eks.amazonaws.com/role-arn: {{ .Values.ebsCsiDriverRoleArn }}
+{{- if .Values.persistence.efs.create_EfsNodeSa }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/name: aws-efs-csi-driver
+  name: efs-csi-node-sa
+  namespace: kube-system
+  annotations:
+    eks.amazonaws.com/role-arn: {{ .Values.efsCsiDriverNodeRoleArn }}
+{{- end }}
 ---
 apiVersion: v1
 kind: Service
@@ -143,7 +147,7 @@ spec:
   selector:
     matchLabels:
       app: masque-agent
-  replicas: 1
+  replicas: {{ .Values.masqueagents }}
   template:
     metadata:
       creationTimestamp: null
