@@ -46,7 +46,7 @@ kind: StorageClass
 metadata:
   name: {{ .Values.persistence.ebs.storageClassName }}
 provisioner: ebs.csi.aws.com
-reclaimPolicy: {{ .Values.persistence.efs.reclaimPolicy }}
+reclaimPolicy: {{ .Values.persistence.ebs.reclaimPolicy | default "Retain" }}
 volumeBindingMode: WaitForFirstConsumer
 parameters:
   type: gp3

@@ -3,7 +3,27 @@ entries:
   datamasque:
   - apiVersion: v2
     appVersion: 2.19.1
-    created: "2024-06-10T16:40:59.997055-03:00"
+    created: "2024-06-24T16:32:40.417039-03:00"
+    description: A Helm chart for Kubernetes
+    digest: 2bd20b4e2626a1f94ff90dede7f50e1abe5051e9374d42777cb1429f478c292f
+    name: datamasque
+    type: application
+    urls:
+    - https://raw.githubusercontent.com/datamasque/DataMasque-charts/main/datamasque-0.1.2.tgz
+    version: 0.1.2
+  - apiVersion: v2
+    appVersion: 2.19.1
+    created: "2024-06-24T16:32:40.415848-03:00"
+    description: A Helm chart for Kubernetes
+    digest: e10fb801acfb35d8c421c440cba27b9ebf8b8bdcda70b850741d47c2d29b40f2
+    name: datamasque
+    type: application
+    urls:
+    - https://raw.githubusercontent.com/datamasque/DataMasque-charts/main/datamasque-0.1.1.tgz
+    version: 0.1.1
+  - apiVersion: v2
+    appVersion: 2.19.1
+    created: "2024-06-24T16:32:40.414693-03:00"
     description: A Helm chart for Kubernetes
     digest: 6fc0e421bf09bf08515a76c1486335581df917acd9961b81c14d94f436fae69a
     name: datamasque
@@ -11,4 +31,4 @@ entries:
     urls:
     - https://raw.githubusercontent.com/datamasque/DataMasque-charts/main/datamasque-0.1.0.tgz
     version: 0.1.0
-generated: "2024-06-10T16:40:59.995969-03:00"
+generated: "2024-06-24T16:32:40.411991-03:00"
