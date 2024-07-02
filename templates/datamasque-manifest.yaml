@@ -85,7 +85,7 @@ spec:
       creationTimestamp: null
       labels:
         app: masque
-        {{- include "datamasque.productLabel" . | nindent 4 }}
+        {{- include "datamasque.productLabel" . | nindent 8 }}
     spec:
       securityContext:
         runAsUser: 1000
@@ -153,7 +153,7 @@ spec:
       creationTimestamp: null
       labels:
         app: masque-agent
-        {{- include "datamasque.productLabel" . | nindent 4 }}
+        {{- include "datamasque.productLabel" . | nindent 8 }}
     spec:
       securityContext:
         runAsUser: 1000
@@ -280,7 +280,7 @@ spec:
     metadata:
       labels:
         app: admin-db
-        {{- include "datamasque.productLabel" . | nindent 4 }}
+        {{- include "datamasque.productLabel" . | nindent 8 }}
     spec:
       serviceAccountName: {{ .Values.serviceAccount.name }}
       {{- if and .Values.multiAZ .Values.availabilityZone }}

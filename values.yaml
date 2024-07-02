@@ -1,7 +1,7 @@
 # DM Deployment values.yaml
 createNamespace: true
 namespace: datamasque
-masqueagents: 4 
+masqueagents: 2 
 image:
   repository: 123456789012.dkr.ecr.ap-southeast-2.amazonaws.com/datamasque
   tag: 2-19-1-final-14479
